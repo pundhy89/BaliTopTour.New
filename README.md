@@ -6,8 +6,7 @@
 
 This contains everything you need to run your app locally.
 
-View your app in AI Studio: [https://ai.studio/apps/556860ba-31d2-4048-8b80-d50e0bc35d49](https://aistudio.google.com/u/7/apps/c3008ec9-2732-403d-a48e-87b5e716e7b0?showPreview=true)
-
+View your app in AI Studio: https://aistudio.google.com/apps/9af254dd-b0c0-450d-a4fd-04655a16fdfe?appParams=%252F&showPreview=true&project=gen-lang-client-0803832430
 ## Run Locally
 
 **Prerequisites:**  Node.js
