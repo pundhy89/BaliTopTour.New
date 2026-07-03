@@ -1,4 +1,31 @@
 export const translations: Record<string, { id: string; en: string; zh: string }> = {
+  view_more_activities: {
+    id: 'Lihat Lebih Banyak Aktivitas',
+    en: 'View More Activities',
+    zh: '查看更多活动'
+  },
+  select_language_desc: {
+    id: 'Sentuh opsi di bawah untuk mengubah bahasa aplikasi',
+    en: 'Select an option to switch the application language',
+    zh: '选择一个选项以切换应用程序语言'
+  },
+
+  payment_method: {
+    id: 'Metode Pembayaran',
+    en: 'Payment Method',
+    zh: '付款方式'
+  },
+  payment_method_desc: {
+    id: 'Pilih metode pembayaran untuk melihat informasi rekening',
+    en: 'Select a payment method to view account information',
+    zh: '选择一种付款方式以查看帐户信息'
+  },
+  view_more_tour: {
+    id: 'Lihat Lebih Banyak Paket Wisata',
+    en: 'View More Tour Packages',
+    zh: '查看更多旅游套餐'
+  },
+
   home_greeting_hi: {
     id: 'Hai',
     en: 'Hi',

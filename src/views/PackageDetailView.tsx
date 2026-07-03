@@ -66,7 +66,23 @@ export default function PackageDetailView({ id, navigate }: { id: string; naviga
     const optionStr = selectedOptionName ? ` - ${selectedOptionName}` : '';
     const priceStr = `Rp ${displayPrice.toLocaleString('id-ID')}`;
     
-    const textMsg = `${baseMsg}${tourName}${optionStr}. ${translate('wa_price', language)}: ${priceStr}`;
+    let textMsg = '';
+    
+    if (settings.receipt_company_name) {
+      textMsg += `==========================\n`;
+      textMsg += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
+      textMsg += `==========================\n\n`;
+      textMsg += `*INVOICE / PESANAN*\n`;
+      textMsg += `Paket: ${tourName}${optionStr}\n`;
+      textMsg += `Total: ${priceStr}\n\n`;
+      if (settings.receipt_footer) {
+        textMsg += `--------------------------\n`;
+        textMsg += `${settings.receipt_footer}\n`;
+        textMsg += `==========================`;
+      }
+    } else {
+      textMsg = `${baseMsg}${tourName}${optionStr}. ${translate('wa_price', language)}: ${priceStr}`;
+    }
     
     // Save to Visitor booking logs
     trackAction('book_now', `Clicked book now for package: ${tourName} (${selectedOptionName})`);

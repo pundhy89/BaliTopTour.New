@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { translate } from '../data/translations';
-import { Globe, User, Phone, Settings as SettingsIcon, LogIn, ChevronRight, Edit2, ShieldAlert } from 'lucide-react';
+import { Globe, User, Phone, Settings as SettingsIcon, LogIn, ChevronRight, Edit2, ShieldAlert, Landmark, X, Copy } from 'lucide-react';
 
 export default function ProfileView({ navigate }: { navigate: (to: string | number) => void }) {
   const {
@@ -16,6 +16,12 @@ export default function ProfileView({ navigate }: { navigate: (to: string | numb
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(userName);
+  const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  const hasBca = !!(settings.bank_bca_number || settings.bank_bca_logo);
+  const hasSeabank = !!(settings.bank_seabank_number || settings.bank_seabank_logo);
+  const hasPaypal = !!(settings.bank_paypal_number || settings.bank_paypal_logo);
+  const hasAnyBank = hasBca || hasSeabank || hasPaypal;
+
 
   const handleNameSave = () => {
     if (nameInput.trim()) {
@@ -118,7 +124,7 @@ export default function ProfileView({ navigate }: { navigate: (to: string | numb
             {translate('profile_language', language)}
           </h4>
           <p className="text-slate-400 text-[10px] font-semibold mb-4 leading-relaxed">
-            {language === 'id' ? 'Sentuh opsi di bawah untuk mengubah bahasa aplikasi' : 'Select an option to switch the application language'}
+            {translate('select_language_desc', language)}
           </p>
           <div className="bg-slate-50 border border-slate-100 p-1 rounded-2xl flex items-center w-full gap-1 shadow-inner">
             {languages.map(lang => {
@@ -161,6 +167,120 @@ export default function ProfileView({ navigate }: { navigate: (to: string | numb
           </div>
           <ChevronRight size={16} className="text-slate-400" />
         </button>
+
+        {/* Metode Pembayaran */}
+        {hasAnyBank && (
+        <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+          <h4 className="text-slate-800 font-bold text-xs mb-1.5 flex items-center gap-2">
+            <Landmark size={15} style={primaryText} />
+            {translate('payment_method', language)}
+          </h4>
+          <p className="text-slate-400 text-[10px] font-semibold mb-4 leading-relaxed">
+            {translate('payment_method_desc', language)}
+          </p>
+          <div className="flex gap-2">
+            {hasBca && (
+            <button
+              onClick={() => setSelectedBank('bca')}
+              className={`flex-1 py-2 px-1 h-12 border rounded-xl flex items-center justify-center transition-all hover:bg-slate-50 border-slate-100 bg-white`}
+            >
+              {settings.bank_bca_logo ? (
+                <img src={settings.bank_bca_logo} alt="BCA" className="h-5 w-auto object-contain drop-shadow-sm" />
+              ) : (
+                <img src="https://mgoutxmbncyoeeisosrx.supabase.co/storage/v1/object/public/cgve9jbd8q9t_tour_images/uploads/bca-logo.png" alt="BCA" className="h-5 w-auto object-contain grayscale-[0.2] opacity-80 mix-blend-multiply" onError={(e) => e.currentTarget.style.display = 'none'} />
+              )}
+            </button>
+            )}
+            {hasSeabank && (
+            <button
+              onClick={() => setSelectedBank('seabank')}
+              className={`flex-1 py-2 px-1 h-12 border rounded-xl flex items-center justify-center transition-all hover:bg-slate-50 border-slate-100 bg-white`}
+            >
+              {settings.bank_seabank_logo ? (
+                <img src={settings.bank_seabank_logo} alt="SeaBank" className="h-5 w-auto object-contain drop-shadow-sm" />
+              ) : (
+                <img src="https://mgoutxmbncyoeeisosrx.supabase.co/storage/v1/object/public/cgve9jbd8q9t_tour_images/uploads/seabank-logo.png" alt="SeaBank" className="h-5 w-auto object-contain grayscale-[0.2] opacity-80 mix-blend-multiply" onError={(e) => e.currentTarget.style.display = 'none'} />
+              )}
+            </button>
+            )}
+            {hasPaypal && (
+            <button
+              onClick={() => setSelectedBank('paypal')}
+              className={`flex-1 py-2 px-1 h-12 border rounded-xl flex items-center justify-center transition-all hover:bg-slate-50 border-slate-100 bg-white`}
+            >
+              {settings.bank_paypal_logo ? (
+                <img src={settings.bank_paypal_logo} alt="PayPal" className="h-5 w-auto object-contain drop-shadow-sm" />
+              ) : (
+                <img src="https://mgoutxmbncyoeeisosrx.supabase.co/storage/v1/object/public/cgve9jbd8q9t_tour_images/uploads/paypal-logo.png" alt="PayPal" className="h-5 w-auto object-contain grayscale-[0.2] opacity-80 mix-blend-multiply" onError={(e) => e.currentTarget.style.display = 'none'} />
+              )}
+            </button>
+            )}
+          </div>
+        </div>
+        )}
+        
+        {selectedBank && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-[28px] w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                  <Landmark size={18} className="text-indigo-600" />
+                  Informasi Rekening
+                </h3>
+                <button onClick={() => setSelectedBank(null)} className="p-2 bg-slate-100 text-slate-500 hover:text-slate-700 rounded-full transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="p-6 flex flex-col items-center">
+                {selectedBank === 'bca' && (
+                  <>
+                    {settings.bank_bca_logo ? (
+                      <img src={settings.bank_bca_logo} alt="BCA" className="w-full max-w-[140px] h-12 mb-4 object-contain drop-shadow-md" />
+                    ) : (
+                      <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-black text-xl mb-4">BCA</div>
+                    )}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nomor Rekening</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-2xl font-black text-slate-800 tracking-tight">{settings.bank_bca_number || '-'}</p>
+                      <button onClick={() => navigator.clipboard.writeText(settings.bank_bca_number || '')} className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"><Copy size={16} /></button>
+                    </div>
+                    <p className="text-xs font-bold text-slate-500">a.n. <span className="text-slate-700">{settings.bank_bca_name || '-'}</span></p>
+                  </>
+                )}
+                {selectedBank === 'seabank' && (
+                  <>
+                    {settings.bank_seabank_logo ? (
+                      <img src={settings.bank_seabank_logo} alt="SeaBank" className="w-full max-w-[140px] h-12 mb-4 object-contain drop-shadow-md" />
+                    ) : (
+                      <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center font-black text-xl mb-4">SB</div>
+                    )}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nomor Rekening</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-2xl font-black text-slate-800 tracking-tight">{settings.bank_seabank_number || '-'}</p>
+                      <button onClick={() => navigator.clipboard.writeText(settings.bank_seabank_number || '')} className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"><Copy size={16} /></button>
+                    </div>
+                    <p className="text-xs font-bold text-slate-500">a.n. <span className="text-slate-700">{settings.bank_seabank_name || '-'}</span></p>
+                  </>
+                )}
+                {selectedBank === 'paypal' && (
+                  <>
+                    {settings.bank_paypal_logo ? (
+                      <img src={settings.bank_paypal_logo} alt="PayPal" className="w-full max-w-[140px] h-12 mb-4 object-contain drop-shadow-md" />
+                    ) : (
+                      <div className="w-16 h-16 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center font-black text-xl mb-4">PP</div>
+                    )}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Akun PayPal</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xl font-black text-slate-800 tracking-tight">{settings.bank_paypal_number || '-'}</p>
+                      <button onClick={() => navigator.clipboard.writeText(settings.bank_paypal_number || '')} className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"><Copy size={16} /></button>
+                    </div>
+                    <p className="text-xs font-bold text-slate-500">a.n. <span className="text-slate-700">{settings.bank_paypal_name || '-'}</span></p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Admin Portal Nav option */}
         <button

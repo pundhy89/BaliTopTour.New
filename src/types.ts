@@ -23,6 +23,20 @@ export interface Settings {
   profile_speech_text_id?: string;
   profile_speech_text_en?: string;
   profile_speech_text_zh?: string;
+  bank_bca_number?: string;
+  bank_bca_name?: string;
+  bank_bca_logo?: string;
+  bank_seabank_number?: string;
+  bank_seabank_name?: string;
+  bank_seabank_logo?: string;
+  bank_paypal_number?: string;
+  bank_paypal_name?: string;
+  bank_paypal_logo?: string;
+  receipt_logo_url?: string;
+  receipt_company_name?: string;
+  receipt_footer?: string;
+  receipt_layout?: 'left' | 'center';
+  receipt_paper_size?: '58mm' | '80mm';
 }
 
 export interface TourPackage {

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { translate } from '../data/translations';
 import { 
   Users, Layers, Settings as SetIcon, Database, Save, Trash2, Edit, Plus, Check, Loader2, ArrowLeft, Image, KeyRound, Download, Upload, Eye,
-  Compass, PhoneCall, Radio, ShoppingBag, Activity as ActivityIcon, Palette, CheckCircle, MapPin, CloudLightning, Map
+  Compass, PhoneCall, Radio, ShoppingBag, Activity as ActivityIcon, Palette, CheckCircle, MapPin, CloudLightning, Map, Landmark, Printer
 } from 'lucide-react';
 import { TourPackage, Activity } from '../types';
 import { BOKEH_THEMES } from '../data/bokehThemes';
@@ -55,14 +55,16 @@ function ImageUploadOrUrl({
                   height = maxSize;
                 }
               }
-
               canvas.width = width || 100;
               canvas.height = height || 100;
               const ctx = canvas.getContext('2d');
               
               if (ctx) {
+                const isTransparent = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/gif' || file.type === 'image/svg+xml';
+                const outputType = isTransparent ? 'image/webp' : 'image/jpeg';
+                ctx.clearRect(0, 0, width, height);
                 ctx.drawImage(img, 0, 0, width, height);
-                const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                const compressedBase64 = canvas.toDataURL(outputType, quality);
                 onChange(compressedBase64);
               } else {
                 onChange(reader.result as string);
@@ -216,7 +218,7 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
   const [loginError, setLoginError] = useState('');
 
   // Tab selections
-  const [activeTab, setActiveTab] = useState<'stats' | 'packages' | 'activities' | 'gallery' | 'settings' | 'backup' | 'theme' | null>(null);
+  const [activeTab, setActiveTab] = useState<'stats' | 'packages' | 'activities' | 'gallery' | 'settings' | 'backup' | 'theme' | 'banks' | 'receipt' | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
 
   // Collapsible visitor logs
@@ -1233,6 +1235,44 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
             </div>
             <span className="text-[10px] font-extrabold uppercase tracking-wide block leading-none truncate w-full">
               {language === 'zh' ? 'JSON 备份' : language === 'en' ? 'JSON Backup' : 'Backup JSON'}
+            </span>
+          </button>
+          
+          {/* Akun Bank */}
+          <button
+            onClick={() => setActiveTab('banks')}
+            className={`p-3.5 rounded-[24px] border flex flex-col items-center justify-center text-center transition-all duration-200 active:scale-95 cursor-pointer shadow-sm ${
+              activeTab === 'banks' 
+                ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center mb-2 transition-colors ${
+              activeTab === 'banks' ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600'
+            }`}>
+              <Landmark size={18} className="stroke-[2.2px]" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wide block leading-none truncate w-full">
+              Akun Bank
+            </span>
+          </button>
+
+          {/* Printer & Struk */}
+          <button
+            onClick={() => setActiveTab('receipt')}
+            className={`p-3.5 rounded-[24px] border flex flex-col items-center justify-center text-center transition-all duration-200 active:scale-95 cursor-pointer shadow-sm ${
+              activeTab === 'receipt' 
+                ? 'bg-teal-600 border-teal-600 text-white shadow-md' 
+                : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center mb-2 transition-colors ${
+              activeTab === 'receipt' ? 'bg-white/10 text-white' : 'bg-teal-50 text-teal-600'
+            }`}>
+              <Printer size={18} className="stroke-[2.2px]" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wide block leading-none truncate w-full">
+              Printer & Struk
             </span>
           </button>
         </div>
@@ -2736,8 +2776,8 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
                   onChange={setNewGalleryUrl}
                   label="Foto Galeri"
                   placeholder="Isi alamat foto URL (https://...) atau unggah"
-                  maxSize={1200}
-                  quality={0.8}
+                  maxSize={800}
+                  quality={0.6}
                 />
                 <button
                   onClick={() => {
@@ -2780,8 +2820,8 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
                   onChange={setNewBannerUrl}
                   label="Banner Slider Utama"
                   placeholder="Isi alamat banner URL (https://...) atau unggah"
-                  maxSize={1600}
-                  quality={0.85}
+                  maxSize={800}
+                  quality={0.65}
                 />
                 <button
                   onClick={() => {
@@ -2824,8 +2864,8 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
                   onChange={setPromoBannerUrl}
                   label="Foto Promo"
                   placeholder="URL atau unggah gambar"
-                  maxSize={1200}
-                  quality={0.8}
+                  maxSize={800}
+                  quality={0.6}
                 />
                 
                 <div>
@@ -3273,6 +3313,180 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 8: BANK ACCOUNTS (banks) */}
+        {activeTab === 'banks' && (
+          <div className="flex flex-col gap-4 text-left">
+            <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+              <h3 className="text-slate-800 font-extrabold text-xs mb-1 flex items-center gap-1.5">
+                <Landmark size={15} className="text-blue-600" />
+                Pengaturan Akun Bank & E-Wallet
+              </h3>
+              <p className="text-slate-400 text-[10px] font-bold leading-relaxed mb-4">
+                Masukkan informasi nomor rekening atau ID Anda. Akan ditampilkan di profil pengunjung.
+              </p>
+              
+              <div className="flex flex-col gap-4">
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col gap-3">
+                  <h4 className="font-extrabold text-[11px] text-slate-700 uppercase tracking-wider flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div>BCA</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500">Nomor Rekening</label>
+                      <input type="text" value={settings.bank_bca_number || ''} onChange={e => updateSettings({ ...settings, bank_bca_number: e.target.value })} placeholder="Contoh: 1234567890" className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500">Atas Nama</label>
+                      <input type="text" value={settings.bank_bca_name || ''} onChange={e => updateSettings({ ...settings, bank_bca_name: e.target.value })} placeholder="Contoh: John Doe" className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none" />
+                    </div>
+                  </div>
+                  <ImageUploadOrUrl value={settings.bank_bca_logo || ''} onChange={val => updateSettings({ ...settings, bank_bca_logo: val })} label="Logo Bank BCA" placeholder="URL logo atau unggah" />
+                </div>
+                
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col gap-3">
+                  <h4 className="font-extrabold text-[11px] text-slate-700 uppercase tracking-wider flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500"></div>SeaBank</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500">Nomor Rekening</label>
+                      <input type="text" value={settings.bank_seabank_number || ''} onChange={e => updateSettings({ ...settings, bank_seabank_number: e.target.value })} placeholder="Contoh: 9012345678" className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500">Atas Nama</label>
+                      <input type="text" value={settings.bank_seabank_name || ''} onChange={e => updateSettings({ ...settings, bank_seabank_name: e.target.value })} placeholder="Contoh: John Doe" className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none" />
+                    </div>
+                  </div>
+                  <ImageUploadOrUrl value={settings.bank_seabank_logo || ''} onChange={val => updateSettings({ ...settings, bank_seabank_logo: val })} label="Logo Bank SeaBank" placeholder="URL logo atau unggah" />
+                </div>
+                
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col gap-3">
+                  <h4 className="font-extrabold text-[11px] text-slate-700 uppercase tracking-wider flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-sky-500"></div>PayPal</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500">Akun / Email</label>
+                      <input type="text" value={settings.bank_paypal_number || ''} onChange={e => updateSettings({ ...settings, bank_paypal_number: e.target.value })} placeholder="Contoh: email@example.com" className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500">Atas Nama</label>
+                      <input type="text" value={settings.bank_paypal_name || ''} onChange={e => updateSettings({ ...settings, bank_paypal_name: e.target.value })} placeholder="Contoh: John Doe" className="bg-white border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 outline-none" />
+                    </div>
+                  </div>
+                  <ImageUploadOrUrl value={settings.bank_paypal_logo || ''} onChange={val => updateSettings({ ...settings, bank_paypal_logo: val })} label="Logo Bank PayPal" placeholder="URL logo atau unggah" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 9: PRINTER & RECEIPT (receipt) */}
+        {/* TAB 9: PRINTER & RECEIPT (receipt) */}
+        {activeTab === 'receipt' && (
+          <div className="flex flex-col gap-4 text-left">
+            <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+              <h3 className="text-slate-800 font-extrabold text-xs mb-1 flex items-center gap-1.5">
+                <Printer size={15} className="text-teal-600" />
+                Pengaturan Struk & Printer Thermal
+              </h3>
+              <p className="text-slate-400 text-[10px] font-bold leading-relaxed mb-4">
+                Atur tata letak, logo, dan footer struk. Hubungkan printer bluetooth untuk mencetak.
+              </p>
+              
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tata Letak (Layout)</label>
+                    <select 
+                      value={settings.receipt_layout || 'center'}
+                      onChange={(e) => updateSettings({ ...settings, receipt_layout: e.target.value as 'left' | 'center' })}
+                      className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-4 py-2.5 focus:border-teal-300 outline-none"
+                    >
+                      <option value="center">Tengah (Center)</option>
+                      <option value="left">Kiri (Left)</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Ukuran Kertas</label>
+                    <select 
+                      value={settings.receipt_paper_size || '58mm'}
+                      onChange={(e) => updateSettings({ ...settings, receipt_paper_size: e.target.value as '58mm' | '80mm' })}
+                      className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-4 py-2.5 focus:border-teal-300 outline-none"
+                    >
+                      <option value="58mm">58mm (Kecil)</option>
+                      <option value="80mm">80mm (Besar)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <ImageUploadOrUrl
+                  value={settings.receipt_logo_url || ''}
+                  onChange={(val) => updateSettings({ ...settings, receipt_logo_url: val })}
+                  label="Logo Struk"
+                  placeholder="URL logo atau unggah"
+                />
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nama Perusahaan (Header Struk)</label>
+                  <input
+                    type="text"
+                    value={settings.receipt_company_name || ''}
+                    onChange={(e) => updateSettings({ ...settings, receipt_company_name: e.target.value })}
+                    placeholder="Contoh: Bali Top Tour"
+                    className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-4 py-2.5 focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-100 transition-all outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Teks Footer Struk</label>
+                  <textarea
+                    value={settings.receipt_footer || ''}
+                    onChange={(e) => updateSettings({ ...settings, receipt_footer: e.target.value })}
+                    placeholder="Contoh: Terima kasih atas pesanan Anda. Semoga liburan Anda menyenangkan!"
+                    rows={2}
+                    className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-4 py-2.5 focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-100 transition-all outline-none resize-none"
+                  />
+                </div>
+              </div>
+              
+              <div className="border-t border-slate-100 pt-5">
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex justify-between items-center">
+                  Preview Struk
+                  <button onClick={() => {
+                    if ((navigator as any).bluetooth) {
+                      (navigator as any).bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] }).then(device => { alert('Terhubung ke: ' + device.name); }).catch(err => { console.error(err); alert('Koneksi gagal atau dibatalkan.'); });
+                    } else {
+                      alert('Web Bluetooth API tidak didukung di browser ini.');
+                    }
+                  }} className="text-teal-600 bg-teal-50 px-2 py-1 rounded flex items-center gap-1 active:scale-95 transition-all"><Printer size={12} /> Hubungkan Printer</button>
+                </h4>
+                
+                <div className={`bg-white border border-slate-200 shadow-sm mx-auto p-4 font-mono text-slate-800 ${settings.receipt_paper_size === '80mm' ? 'max-w-[320px]' : 'max-w-[240px]'} ${settings.receipt_layout === 'left' ? 'text-left' : 'text-center'}`}>
+                  {settings.receipt_logo_url && (
+                    <img src={settings.receipt_logo_url} className={`h-12 mb-2 grayscale ${settings.receipt_layout === 'left' ? 'mr-auto' : 'mx-auto'}`} alt="Logo" />
+                  )}
+                  <h4 className="font-bold text-sm mb-1">{settings.receipt_company_name || 'BALI TOP TOUR'}</h4>
+                  <div className="text-[10px] border-b border-dashed border-slate-300 pb-2 mb-2">
+                    <p>Waktu: {new Date().toLocaleString()}</p>
+                    <p>Kasir: Admin</p>
+                  </div>
+                  <div className="text-[11px] mb-2 text-left">
+                    <p className="font-bold">Paket Wisata Bali 3 Hari</p>
+                    <div className="flex justify-between">
+                      <span>1x</span>
+                      <span>Rp 1.500.000</span>
+                    </div>
+                  </div>
+                  <div className="text-[11px] border-t border-dashed border-slate-300 pt-2 mb-3 text-left">
+                    <div className="flex justify-between font-bold">
+                      <span>TOTAL</span>
+                      <span>Rp 1.500.000</span>
+                    </div>
+                  </div>
+                  {settings.receipt_footer && (
+                    <p className="text-[9px] mt-4 whitespace-pre-wrap">{settings.receipt_footer}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

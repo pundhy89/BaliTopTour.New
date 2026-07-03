@@ -354,7 +354,7 @@ export default function HomeView({ navigate }: { navigate: (to: string | number)
                     style={{ borderColor: settings.theme_color, color: settings.theme_color }}
                     className="inline-flex items-center gap-1.5 px-6 py-3 border hover:bg-slate-50/50 font-bold text-xs tracking-wider uppercase rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer bg-white"
                   >
-                    {language === 'id' ? 'Lihat Selengkapnya' : 'View More Tour Packages'}
+                    {translate('view_more_tour', language)}
                     <ChevronRight size={14} />
                   </button>
                 </div>
@@ -445,7 +445,7 @@ export default function HomeView({ navigate }: { navigate: (to: string | number)
                     style={{ borderColor: settings.theme_color, color: settings.theme_color }}
                     className="inline-flex items-center gap-1.5 px-6 py-3 border hover:bg-slate-50/50 font-bold text-xs tracking-wider uppercase rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer bg-white"
                   >
-                    {language === 'id' ? 'Lihat Selengkapnya' : 'View More Activities'}
+                    {translate('view_more_activities', language)}
                     <ChevronRight size={14} />
                   </button>
                 </div>
