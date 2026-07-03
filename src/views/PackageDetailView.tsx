@@ -66,27 +66,41 @@ export default function PackageDetailView({ id, navigate }: { id: string; naviga
     const optionStr = selectedOptionName ? ` - ${selectedOptionName}` : '';
     const priceStr = `Rp ${displayPrice.toLocaleString('id-ID')}`;
     
+    
+    const pemesan = userName || 'Guest';
     let textMsg = '';
     
-    if (settings.receipt_company_name) {
-      textMsg += `==========================\n`;
-      textMsg += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
-      textMsg += `==========================\n\n`;
-      textMsg += `*INVOICE / PESANAN*\n`;
-      textMsg += `Paket: ${tourName}${optionStr}\n`;
-      textMsg += `Total: ${priceStr}\n\n`;
-      if (settings.receipt_footer) {
-        textMsg += `--------------------------\n`;
-        textMsg += `${settings.receipt_footer}\n`;
-        textMsg += `==========================`;
-      }
+    let customMsg = '';
+    if (settings.wa_template_package) {
+      customMsg = settings.wa_template_package
+        .replace('[NAMA_PEMESAN]', pemesan)
+        .replace('[NAMA_PAKET]', tourName)
+        .replace('[OPSI]', selectedOptionName)
+        .replace('[HARGA]', priceStr);
     } else {
-      textMsg = `${baseMsg}${tourName}${optionStr}. ${translate('wa_price', language)}: ${priceStr}`;
+      customMsg = `${baseMsg} ${tourName}${optionStr}. ${translate('wa_price', language)}: ${priceStr}`;
     }
-    
+
+    textMsg = customMsg;
+
+    if (settings.receipt_company_name) {
+      let receipt = `\n\n==========================\n`;
+      receipt += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
+      receipt += `==========================\n`;
+      receipt += `*INVOICE / PESANAN*\n`;
+      receipt += `Pemesan: ${pemesan}\n`;
+      receipt += `Paket: ${tourName}${optionStr}\n`;
+      receipt += `Total: ${priceStr}\n`;
+      if (settings.receipt_footer) {
+        receipt += `--------------------------\n`;
+        receipt += `${settings.receipt_footer}\n`;
+      }
+      receipt += `==========================`;
+      textMsg += receipt;
+    }
+
     // Save to Visitor booking logs
     trackAction('book_now', `Clicked book now for package: ${tourName} (${selectedOptionName})`);
-
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(textMsg)}`, '_blank');
   };
 

@@ -79,24 +79,39 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
     const labelStr = selectedPrice ? ` (${selectedPrice.label})` : '';
     const priceStr = selectedPrice ? `Rp ${selectedPrice.price_idr.toLocaleString('id-ID')}` : `Rp ${activity.price_per_person_idr?.toLocaleString('id-ID')}`;
     
+    
+    const pemesan = userName || 'Guest';
     let textMsg = '';
     
-    if (settings.receipt_company_name) {
-      textMsg += `==========================\n`;
-      textMsg += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
-      textMsg += `==========================\n\n`;
-      textMsg += `*INVOICE / PESANAN*\n`;
-      textMsg += `Aktivitas: ${actName}${pkgStr}${labelStr}\n`;
-      textMsg += `Total: ${priceStr}\n\n`;
-      if (settings.receipt_footer) {
-        textMsg += `--------------------------\n`;
-        textMsg += `${settings.receipt_footer}\n`;
-        textMsg += `==========================`;
-      }
+    let customMsg = '';
+    if (settings.wa_template_activity) {
+      customMsg = settings.wa_template_activity
+        .replace('[NAMA_PEMESAN]', pemesan)
+        .replace('[NAMA_AKTIVITAS]', actName)
+        .replace('[PAKET]', selectedPkgName)
+        .replace('[OPSI]', selectedPrice ? selectedPrice.label : '')
+        .replace('[HARGA]', priceStr);
     } else {
-      textMsg = `${baseMsg}${actName}${pkgStr}${labelStr}. ${translate('wa_price', language)}: ${priceStr}`;
+      customMsg = `${baseMsg} ${actName}${pkgStr}${labelStr}. ${translate('wa_price', language)}: ${priceStr}`;
     }
 
+    textMsg = customMsg;
+
+    if (settings.receipt_company_name) {
+      let receipt = `\n\n==========================\n`;
+      receipt += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
+      receipt += `==========================\n`;
+      receipt += `*INVOICE / PESANAN*\n`;
+      receipt += `Pemesan: ${pemesan}\n`;
+      receipt += `Aktivitas: ${actName}${pkgStr}${labelStr}\n`;
+      receipt += `Total: ${priceStr}\n`;
+      if (settings.receipt_footer) {
+        receipt += `--------------------------\n`;
+        receipt += `${settings.receipt_footer}\n`;
+      }
+      receipt += `==========================`;
+      textMsg += receipt;
+    }
 
     // Log tracking
     trackAction('book_now', `Booked activity: ${actName} - ${selectedPkgName} (${selectedPrice?.label || ''})`);

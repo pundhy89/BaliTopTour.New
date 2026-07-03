@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { translate } from '../data/translations';
 import { 
   Users, Layers, Settings as SetIcon, Database, Save, Trash2, Edit, Plus, Check, Loader2, ArrowLeft, Image, KeyRound, Download, Upload, Eye,
-  Compass, PhoneCall, Radio, ShoppingBag, Activity as ActivityIcon, Palette, CheckCircle, MapPin, CloudLightning, Map, Landmark, Printer
+  Compass, PhoneCall, Radio, ShoppingBag, Activity as ActivityIcon, Palette, CheckCircle, MapPin, CloudLightning, Map, Landmark, Printer, MessageCircle
 } from 'lucide-react';
 import { TourPackage, Activity } from '../types';
 import { BOKEH_THEMES } from '../data/bokehThemes';
@@ -218,7 +218,7 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
   const [loginError, setLoginError] = useState('');
 
   // Tab selections
-  const [activeTab, setActiveTab] = useState<'stats' | 'packages' | 'activities' | 'gallery' | 'settings' | 'backup' | 'theme' | 'banks' | 'receipt' | null>(null);
+  const [activeTab, setActiveTab] = useState<'stats' | 'packages' | 'activities' | 'gallery' | 'settings' | 'backup' | 'theme' | 'banks' | 'receipt' | 'wa-template' | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
 
   // Collapsible visitor logs
@@ -1254,6 +1254,26 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
             </div>
             <span className="text-[10px] font-extrabold uppercase tracking-wide block leading-none truncate w-full">
               Akun Bank
+            </span>
+          </button>
+
+
+          {/* Template Pesan */}
+          <button
+            onClick={() => setActiveTab('wa-template')}
+            className={`p-3.5 rounded-[24px] border flex flex-col items-center justify-center text-center transition-all duration-200 active:scale-95 cursor-pointer shadow-sm ${
+              activeTab === 'wa-template' 
+                ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md' 
+                : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center mb-2 transition-colors ${
+              activeTab === 'wa-template' ? 'bg-white/10 text-white' : 'bg-fuchsia-50 text-fuchsia-600'
+            }`}>
+              <MessageCircle size={18} className="stroke-[2.2px]" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wide block leading-none truncate w-full">
+              Template Pesan
             </span>
           </button>
 
@@ -3468,6 +3488,7 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
                   <div className="text-[10px] border-b border-dashed border-slate-300 pb-2 mb-2">
                     <p>Waktu: {new Date().toLocaleString()}</p>
                     <p>Kasir: Admin</p>
+                    <p>Pemesan: Budi</p>
                   </div>
                   <div className="text-[11px] mb-2 text-left">
                     <p className="font-bold">Paket Wisata Bali 3 Hari</p>
@@ -3490,6 +3511,89 @@ export default function AdminView({ navigate }: { navigate: (to: string | number
             </div>
           </div>
         )}
+
+        {/* TAB 10: WA TEMPLATE (wa-template) */}
+        {activeTab === 'wa-template' && (
+          <div className="flex flex-col gap-4 text-left">
+            <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+              <h3 className="text-slate-800 font-extrabold text-xs mb-1 flex items-center gap-1.5">
+                <MessageCircle size={15} className="text-fuchsia-600" />
+                Template Pesan WhatsApp
+              </h3>
+              <p className="text-slate-400 text-[10px] font-bold leading-relaxed mb-4">
+                Atur format pesan WhatsApp yang akan dikirim oleh pelanggan saat melakukan pemesanan.
+              </p>
+              
+              <div className="flex flex-col gap-4">
+                {/* Template Tour Package */}
+                <div className="flex flex-col gap-1.5 border border-slate-100 p-4 rounded-2xl bg-slate-50/50">
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">Template Pemesanan Paket Tour</label>
+                  <p className="text-[9px] text-slate-500 mb-2 leading-relaxed">
+                    Gunakan placeholder berikut: <br/>\n                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[NAMA_PEMESAN]</code> untuk nama pemesan (dari profil)<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[NAMA_PAKET]</code> untuk nama paket<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[OPSI]</code> untuk opsi harga yang dipilih (jika ada)<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[HARGA]</code> untuk harga total
+                  </p>
+                  <textarea
+                    value={settings.wa_template_package || `Halo, saya ingin memesan:
+Paket: [NAMA_PAKET]
+Opsi: [OPSI]
+Harga: [HARGA]`}
+                    onChange={(e) => updateSettings({ ...settings, wa_template_package: e.target.value })}
+                    rows={4}
+                    className="w-full bg-white border border-slate-200 outline-none text-xs font-medium text-slate-800 rounded-xl py-2 px-3 resize-none focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100 transition-all"
+                  />
+                  
+                  {/* Preview Tour Package */}
+                  <div className="mt-2 bg-green-50 border border-green-100 rounded-xl p-3">
+                    <span className="text-[9px] font-bold text-green-700 uppercase mb-1 block">Preview Pesan:</span>
+                    <p className="text-[10px] text-green-800 whitespace-pre-wrap font-medium">
+                      {(settings.wa_template_package || `Halo, saya [NAMA_PEMESAN] ingin memesan:\nPaket: [NAMA_PAKET]\nOpsi: [OPSI]\nHarga: [HARGA]`)
+                        .replace('[NAMA_PEMESAN]', 'Budi').replace('[NAMA_PAKET]', 'Nusa Penida Tour')
+                        .replace('[OPSI]', 'Private Car')
+                        .replace('[HARGA]', 'Rp 1.500.000')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Template Activity */}
+                <div className="flex flex-col gap-1.5 border border-slate-100 p-4 rounded-2xl bg-slate-50/50">
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">Template Pemesanan Aktivitas</label>
+                  <p className="text-[9px] text-slate-500 mb-2 leading-relaxed">
+                    Gunakan placeholder berikut: <br/>\n                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[NAMA_PEMESAN]</code> untuk nama pemesan (dari profil)<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[NAMA_AKTIVITAS]</code> untuk nama aktivitas<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[PAKET]</code> untuk paket yang dipilih (opsional)<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[OPSI]</code> untuk harga/opsi khusus (opsional)<br/>
+                    <code className="text-fuchsia-600 font-bold bg-fuchsia-50 px-1 py-0.5 rounded">[HARGA]</code> untuk harga total
+                  </p>
+                  <textarea
+                    value={settings.wa_template_activity || `Halo, saya tertarik dengan aktivitas:
+Aktivitas: [NAMA_AKTIVITAS]
+Paket: [PAKET]
+Opsi: [OPSI]
+Harga: [HARGA]`}
+                    onChange={(e) => updateSettings({ ...settings, wa_template_activity: e.target.value })}
+                    rows={4}
+                    className="w-full bg-white border border-slate-200 outline-none text-xs font-medium text-slate-800 rounded-xl py-2 px-3 resize-none focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100 transition-all"
+                  />
+                  
+                  {/* Preview Activity */}
+                  <div className="mt-2 bg-green-50 border border-green-100 rounded-xl p-3">
+                    <span className="text-[9px] font-bold text-green-700 uppercase mb-1 block">Preview Pesan:</span>
+                    <p className="text-[10px] text-green-800 whitespace-pre-wrap font-medium">
+                      {(settings.wa_template_activity || `Halo, saya [NAMA_PEMESAN] tertarik dengan aktivitas:\nAktivitas: [NAMA_AKTIVITAS]\nPaket: [PAKET]\nOpsi: [OPSI]\nHarga: [HARGA]`)
+                        .replace('[NAMA_PEMESAN]', 'Budi').replace('[NAMA_AKTIVITAS]', 'Water Sports Tanjung Benoa')
+                        .replace('[PAKET]', 'Paket A (Parasailing, Banana Boat)')
+                        .replace('[OPSI]', 'WNI / KTP')
+                        .replace('[HARGA]', 'Rp 250.000')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

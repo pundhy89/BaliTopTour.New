@@ -37,6 +37,8 @@ export interface Settings {
   receipt_footer?: string;
   receipt_layout?: 'left' | 'center';
   receipt_paper_size?: '58mm' | '80mm';
+  wa_template_package?: string;
+  wa_template_activity?: string;
 }
 
 export interface TourPackage {
