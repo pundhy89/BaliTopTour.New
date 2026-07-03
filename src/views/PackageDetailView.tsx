@@ -10,7 +10,9 @@ export default function PackageDetailView({ id, navigate }: { id: string; naviga
     tourPackages,
     tourPackageOptions,
     tourPoints,
-    trackAction
+    trackAction,
+    userName,
+    addToCart
   } = useApp();
 
   // Find the selected package
@@ -36,6 +38,7 @@ export default function PackageDetailView({ id, navigate }: { id: string; naviga
     .sort((a, b) => a.sort_order - b.sort_order);
 
   const [activeOptId, setActiveOptId] = useState<string>(options[0]?.id || 'default');
+  const [quantity, setQuantity] = useState(pkg.min_pax || 1);
 
   // Find points for the active option
   const activePoints = tourPoints
@@ -59,49 +62,20 @@ export default function PackageDetailView({ id, navigate }: { id: string; naviga
 
   const handleBooking = () => {
     const selectedOptionName = activeOpt?.name || '';
-    const num = settings.whatsapp_number || '6282143415254';
-    
-    const baseMsg = translate('wa_message', language);
     const tourName = getEntityName(pkg);
-    const optionStr = selectedOptionName ? ` - ${selectedOptionName}` : '';
-    const priceStr = `Rp ${displayPrice.toLocaleString('id-ID')}`;
     
+    addToCart({
+      type: 'package',
+      itemId: pkg.id,
+      name: tourName,
+      options: selectedOptionName,
+      price: displayPrice,
+      quantity: quantity,
+      cover_image_url: pkg.cover_image_url
+    });
     
-    const pemesan = userName || 'Guest';
-    let textMsg = '';
-    
-    let customMsg = '';
-    if (settings.wa_template_package) {
-      customMsg = settings.wa_template_package
-        .replace('[NAMA_PEMESAN]', pemesan)
-        .replace('[NAMA_PAKET]', tourName)
-        .replace('[OPSI]', selectedOptionName)
-        .replace('[HARGA]', priceStr);
-    } else {
-      customMsg = `${baseMsg} ${tourName}${optionStr}. ${translate('wa_price', language)}: ${priceStr}`;
-    }
-
-    textMsg = customMsg;
-
-    if (settings.receipt_company_name) {
-      let receipt = `\n\n==========================\n`;
-      receipt += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
-      receipt += `==========================\n`;
-      receipt += `*INVOICE / PESANAN*\n`;
-      receipt += `Pemesan: ${pemesan}\n`;
-      receipt += `Paket: ${tourName}${optionStr}\n`;
-      receipt += `Total: ${priceStr}\n`;
-      if (settings.receipt_footer) {
-        receipt += `--------------------------\n`;
-        receipt += `${settings.receipt_footer}\n`;
-      }
-      receipt += `==========================`;
-      textMsg += receipt;
-    }
-
-    // Save to Visitor booking logs
-    trackAction('book_now', `Clicked book now for package: ${tourName} (${selectedOptionName})`);
-    window.open(`https://wa.me/${num}?text=${encodeURIComponent(textMsg)}`, '_blank');
+    trackAction('add_to_cart', `Added package to cart: ${tourName} (${selectedOptionName})`);
+    navigate('/cart');
   };
 
   const primaryBg = { backgroundColor: settings.theme_color };

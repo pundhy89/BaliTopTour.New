@@ -1,7 +1,8 @@
+import { CartView } from "./views/CartView";
+import { ShoppingCart } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import HomeView from './views/HomeView';
-import SearchView from './views/SearchView';
 import MapView from './views/MapView';
 import GalleryView from './views/GalleryView';
 import ProfileView from './views/ProfileView';
@@ -49,7 +50,7 @@ function useHashRoute() {
 
 function MainApp() {
   const { hash, navigate } = useHashRoute();
-  const { settings, language, isAdminLoggedIn } = useApp();
+  const { settings, language, isAdminLoggedIn, cart } = useApp();
 
   // Simple route matched parser
   const renderCurrentView = () => {
@@ -57,9 +58,6 @@ function MainApp() {
 
     if (currentPath === '/') {
       return <HomeView navigate={navigate} />;
-    }
-    if (currentPath === '/search') {
-      return <SearchView navigate={navigate} />;
     }
     if (currentPath === '/map') {
       return <MapView navigate={navigate} />;
@@ -78,6 +76,10 @@ function MainApp() {
       const activityId = currentPath.split('/activity/')[1];
       return <ActivityDetailView id={activityId} navigate={navigate} />;
     }
+
+    if (currentPath === '/cart') {
+      return <CartView onBack={() => navigate('/')} />;
+    }
     if (currentPath === '/admin' || currentPath === '/admin/login') {
       return <AdminView navigate={navigate} />;
     }
@@ -88,7 +90,7 @@ function MainApp() {
 
   // Determine if we should show the persistent bottom menu
   const path = hash.replace(/^#/, '') || '/';
-  const showBottomNav = ['/', '/search', '/map', '/gallery', '/profile'].includes(path);
+  const showBottomNav = ['/', '/map', '/gallery', '/profile'].includes(path);
 
   // Active navigation highlight class style helper
   const getNavClass = (target: string) => {
@@ -105,6 +107,7 @@ function MainApp() {
         
         {/* Render Active View content */}
         {renderCurrentView()}
+
 
         {/* Persistent Bottom Nav Bar element */}
         {showBottomNav && (
@@ -154,22 +157,29 @@ function MainApp() {
               </span>
             </button>
 
-            {/* Cari item (Floating Search) - Re-positioned and styled like the reference photo */}
+            {/* Cart item (Floating Cart) - Re-positioned and styled like the reference photo */}
             <button
-              onClick={() => navigate('/search')}
+              onClick={() => navigate('/cart')}
               className="flex flex-col items-center justify-end flex-1 h-full pb-2 relative transition-all duration-200 active:scale-95 group"
             >
               <div 
                 className="absolute -top-7 w-[64px] h-[64px] rounded-full flex items-center justify-center border-[4px] border-white shadow-[0_8px_20px_rgba(0,0,0,0.15)] transition-all duration-200 group-hover:scale-105"
                 style={{ backgroundColor: settings.theme_color }}
               >
-                <Search size={22} className="stroke-[2.5px] text-white" />
+                <div className="relative">
+                  <ShoppingCart size={22} className="stroke-[2.5px] text-white" />
+                  {cart.length > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                      {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                    </div>
+                  )}
+                </div>
               </div>
               <span 
                 className="text-[10px] font-semibold tracking-wide transition-colors duration-200"
-                style={path === '/search' ? { color: settings.theme_color } : { color: '#8e9aa8' }}
+                style={path === '/cart' ? { color: settings.theme_color } : { color: '#8e9aa8' }}
               >
-                {translate('nav_search', language)}
+                {language === 'en' ? 'Cart' : language === 'zh' ? '购物车' : 'Keranjang'}
               </span>
             </button>
 

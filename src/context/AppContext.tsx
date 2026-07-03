@@ -24,6 +24,21 @@ import {
   PromoBanner
 } from '../types';
 
+
+export type CartItem = {
+  id: string;
+  type: 'package' | 'activity';
+  itemId: string;
+  name: string;
+  options: string;
+  price: number;
+  quantity: number;
+  cover_image_url?: string;
+};
+
+
+
+
 interface AppContextType {
   settings: Settings;
   language: 'id' | 'en' | 'zh';
@@ -75,6 +90,12 @@ interface AppContextType {
   reviews: Review[];
   addReview: (activityId: string, authorName: string, rating: number, comment: string) => void;
 
+  cart: CartItem[];
+  addToCart: (item: Omit<CartItem, 'id'>) => void;
+  removeFromCart: (id: string) => void;
+  updateCartQuantity: (id: string, qty: number) => void;
+  clearCart: () => void;
+  
   // Visitor Logging
   userName: string;
   setUserName: (name: string) => void;
@@ -195,6 +216,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userName, setUserNameState] = useState<string>(() => 
     localStorage.getItem('bali_tour_user_name') || ''
   );
+
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('bali_tour_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('bali_tour_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (item: Omit<CartItem, 'id'>) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.itemId === item.itemId && i.options === item.options && i.type === item.type);
+      if (existing) {
+        return prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + item.quantity } : i);
+      }
+      return [...prev, { ...item, id: Math.random().toString(36).substr(2, 9) }];
+    });
+  };
+
+  const removeFromCart = (id: string) => setCart(prev => prev.filter(i => i.id !== id));
+
+  const updateCartQuantity = (id: string, qty: number) => {
+    if (qty <= 0) {
+      removeFromCart(id);
+      return;
+    }
+    setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: qty } : i));
+  };
+
+  const clearCart = () => setCart([]);
+
+
+
 
   const [hasSeenGreeting, setHasSeenGreeting] = useState<boolean>(() => 
     localStorage.getItem('bali_tour_seen_greeting') === 'true'
@@ -879,7 +938,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         reviews,
         addReview,
 
-        userName,
+        cart,
+    addToCart,
+    removeFromCart,
+    updateCartQuantity,
+    clearCart,
+    userName,
         setUserName,
         hasSeenGreeting,
         setHasSeenGreeting: handleSetHasSeenGreeting,

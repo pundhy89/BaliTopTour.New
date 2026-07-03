@@ -13,7 +13,8 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
     reviews,
     addReview,
     userName,
-    trackAction
+    trackAction,
+    addToCart
   } = useApp();
 
   const activity = activities.find(a => a.id === id);
@@ -45,7 +46,7 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
     .sort((a, b) => a.sort_order - b.sort_order);
 
   // Selected price option index
-  const [selectedPriceIdx, setSelectedPriceIdx] = useState(0);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   // Form write specialized review
   const [authorInput, setAuthorInput] = useState(userName || '');
@@ -71,52 +72,59 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
   const handleBooking = () => {
     const activePkg = packages.find(p => p.id === activePackId);
     const selectedPkgName = activePkg ? getEntityName(activePkg) : '';
-    const selectedPrice = activePrices[selectedPriceIdx];
-    const num = settings.whatsapp_number || '6282143415254';
-    const baseMsg = translate('wa_message', language);
     const actName = getEntityName(activity);
-    const pkgStr = selectedPkgName ? ` - ${selectedPkgName}` : '';
-    const labelStr = selectedPrice ? ` (${selectedPrice.label})` : '';
-    const priceStr = selectedPrice ? `Rp ${selectedPrice.price_idr.toLocaleString('id-ID')}` : `Rp ${activity.price_per_person_idr?.toLocaleString('id-ID')}`;
     
+    let itemsAdded = 0;
     
-    const pemesan = userName || 'Guest';
-    let textMsg = '';
-    
-    let customMsg = '';
-    if (settings.wa_template_activity) {
-      customMsg = settings.wa_template_activity
-        .replace('[NAMA_PEMESAN]', pemesan)
-        .replace('[NAMA_AKTIVITAS]', actName)
-        .replace('[PAKET]', selectedPkgName)
-        .replace('[OPSI]', selectedPrice ? selectedPrice.label : '')
-        .replace('[HARGA]', priceStr);
-    } else {
-      customMsg = `${baseMsg} ${actName}${pkgStr}${labelStr}. ${translate('wa_price', language)}: ${priceStr}`;
-    }
-
-    textMsg = customMsg;
-
-    if (settings.receipt_company_name) {
-      let receipt = `\n\n==========================\n`;
-      receipt += `  *${settings.receipt_company_name.toUpperCase()}*\n`;
-      receipt += `==========================\n`;
-      receipt += `*INVOICE / PESANAN*\n`;
-      receipt += `Pemesan: ${pemesan}\n`;
-      receipt += `Aktivitas: ${actName}${pkgStr}${labelStr}\n`;
-      receipt += `Total: ${priceStr}\n`;
-      if (settings.receipt_footer) {
-        receipt += `--------------------------\n`;
-        receipt += `${settings.receipt_footer}\n`;
+    if (activePrices.length > 0) {
+      activePrices.forEach(pr => {
+        const q = quantities[pr.id] || 0;
+        if (q > 0) {
+          addToCart({
+            type: 'activity',
+            itemId: activity.id,
+            name: actName,
+            options: `${selectedPkgName} - ${pr.label}`,
+            price: pr.price_idr,
+            quantity: q,
+            cover_image_url: activity.cover_image_url
+          });
+          itemsAdded += q;
+        }
+      });
+      
+      // If nothing selected, add 1 of the first price option by default to prevent stuck UI
+      if (itemsAdded === 0 && activePrices.length > 0) {
+        const firstPrice = activePrices[0];
+        addToCart({
+          type: 'activity',
+          itemId: activity.id,
+          name: actName,
+          options: `${selectedPkgName} - ${firstPrice.label}`,
+          price: firstPrice.price_idr,
+          quantity: 1,
+          cover_image_url: activity.cover_image_url
+        });
+        itemsAdded += 1;
       }
-      receipt += `==========================`;
-      textMsg += receipt;
+    } else {
+      const q = quantities['default'] || 1;
+      if (q > 0) {
+        addToCart({
+          type: 'activity',
+          itemId: activity.id,
+          name: actName,
+          options: selectedPkgName,
+          price: activity.price_per_person_idr || 0,
+          quantity: q,
+          cover_image_url: activity.cover_image_url
+        });
+        itemsAdded += q;
+      }
     }
-
-    // Log tracking
-    trackAction('book_now', `Booked activity: ${actName} - ${selectedPkgName} (${selectedPrice?.label || ''})`);
-
-    window.open(`https://wa.me/${num}?text=${encodeURIComponent(textMsg)}`, '_blank');
+    
+    trackAction('add_to_cart', `Added ${itemsAdded} items of activity: ${actName} to cart`);
+    navigate('/cart');
   };
 
   const handleReviewSubmit = (e: React.FormEvent) => {
@@ -201,7 +209,7 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
                     key={p.id}
                     onClick={() => {
                       setActivePackId(p.id);
-                      setSelectedPriceIdx(0);
+                      
                     }}
                     className={`py-2 px-4 rounded-xl text-xs font-bold transition-all border active:scale-95 ${
                       isSelected
@@ -243,41 +251,70 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
           </h3>
 
           {activePrices.length === 0 ? (
-            <div className="text-center py-4 bg-slate-50 rounded-2xl">
-              <p className="text-slate-400 text-xs font-semibold">{translate('activity_no_packages', language)}</p>
+            <div className="w-full p-4 rounded-2xl text-left border border-slate-50 bg-slate-50/40 flex justify-between items-center transition-all">
+              <div className="flex items-center gap-2.5">
+                <span className="text-slate-800 text-xs font-bold">
+                  {translate('per_person', language)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span className="font-bold text-xs" style={primaryText}>
+                  Rp {activity.price_per_person_idr?.toLocaleString('id-ID')}
+                </span>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setQuantities(prev => ({...prev, default: Math.max(1, (prev['default'] || 1) - 1)}))}
+                    className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold active:scale-95"
+                  >
+                    -
+                  </button>
+                  <span className="text-xs font-bold w-4 text-center">{quantities['default'] || 1}</span>
+                  <button 
+                    onClick={() => setQuantities(prev => ({...prev, default: (prev['default'] || 1) + 1}))}
+                    className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold active:scale-95"
+                    style={primaryBg}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {activePrices.map((pr, idx) => {
-                const isSelected = selectedPriceIdx === idx;
+              {activePrices.map((pr) => {
+                const q = quantities[pr.id] || 0;
                 return (
-                  <button
+                  <div
                     key={pr.id}
-                    onClick={() => setSelectedPriceIdx(idx)}
-                    className={`w-full p-4 rounded-2xl text-left border flex justify-between items-center transition-all ${
-                      isSelected
-                        ? 'border-indigo-100 bg-indigo-50/40'
-                        : 'border-slate-50 bg-slate-50/40 hover:bg-slate-50 text-slate-700'
-                    }`}
+                    className="w-full p-4 rounded-2xl text-left border border-slate-50 bg-slate-50/40 flex justify-between items-center transition-all"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div 
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          isSelected ? 'border-transparent text-white' : 'border-slate-300'
-                        }`}
-                        style={isSelected ? primaryBg : {}}
-                      >
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                      </div>
                       <span className="text-slate-800 text-xs font-bold">
                         {language === 'zh' ? (pr.label_zh || pr.label) : language === 'en' ? (pr.label_en || pr.label) : (pr.label_id || pr.label)}
                       </span>
                     </div>
-
-                    <span className="font-bold text-xs" style={primaryText}>
-                      Rp {pr.price_idr.toLocaleString('id-ID')}
-                    </span>
-                  </button>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="font-bold text-xs" style={primaryText}>
+                        Rp {pr.price_idr.toLocaleString('id-ID')}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => setQuantities(prev => ({...prev, [pr.id]: Math.max(0, (prev[pr.id] || 0) - 1)}))}
+                          className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold active:scale-95"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-bold w-4 text-center">{q}</span>
+                        <button 
+                          onClick={() => setQuantities(prev => ({...prev, [pr.id]: (prev[pr.id] || 0) + 1}))}
+                          className="w-6 h-6 rounded-full text-white flex items-center justify-center font-bold active:scale-95"
+                          style={primaryBg}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -402,20 +439,18 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
             {translate('selected_price', language)} IDR
           </span>
           <span className="font-bold text-[15px] mt-0.5 block" style={primaryText}>
-            Rp {(activePrices[selectedPriceIdx]?.price_idr || activity.price_per_person_idr)?.toLocaleString('id-ID')}
-          </span>
-          <span className="text-[8px] text-slate-400 font-bold block">
-            {(() => {
-              const pr = activePrices[selectedPriceIdx];
-              if (pr) {
-                if (language === 'zh') return pr.label_zh || pr.label;
-                if (language === 'en') return pr.label_en || pr.label;
-                return pr.label_id || pr.label;
+            Rp {(() => {
+              if (activePrices.length > 0) {
+                let t = 0;
+                activePrices.forEach(pr => { t += (quantities[pr.id] || 0) * pr.price_idr; });
+                return t.toLocaleString('id-ID');
               }
-              return activity.price_mode === 'per_person'
-                ? (language === 'zh' ? '每人' : language === 'en' ? 'Per person' : 'Per orang')
-                : (language === 'zh' ? '每票' : language === 'en' ? 'Per ticket' : 'Per tiket');
+              const q = quantities['default'] || 1;
+              return (q * (activity.price_per_person_idr || 0)).toLocaleString('id-ID');
             })()}
+            <span className="text-[9px] font-medium text-slate-500 block uppercase tracking-wider mt-0.5">
+              {activePrices.length > 0 ? 'Total' : translate('per_person', language)}
+            </span>
           </span>
         </div>
 
@@ -425,7 +460,7 @@ export default function ActivityDetailView({ id, navigate }: { id: string; navig
           style={primaryBg}
         >
           <Phone size={14} fill="currentColor" />
-          {translate('activity_book_now', language)}
+          {language === 'en' ? 'Add to Cart' : language === 'zh' ? '加入购物车' : 'Tambah Keranjang'}
         </button>
       </div>
     </div>
